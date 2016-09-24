@@ -46,7 +46,7 @@ namespace Sii.Parsing
         }
 
         private readonly string FileName;
-        private readonly string Source;
+        internal readonly string Source;
         private readonly int Length;
         private int Index;
         private int Line;

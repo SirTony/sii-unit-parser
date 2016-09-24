@@ -1,0 +1,53 @@
+﻿SiiNunit
+{
+	/**
+	 * Paccar MX-13 500
+	 * Engine Specifications: https://engines.paccar.com/engines/paccar-mx-13/
+	 */
+	accessory_engine_data : mx13_500.kenworth.t680.engine
+	{
+		name: "Paccar MX-13 500"
+		price: 42800	# Engine price	
+		unlock: 8		# Unlocks @ Level
+		
+		# Engine display info
+		info[]: "500 @@hp@@ (373@@kw@@)"
+		info[]: "1@@dg@@850 @@lb_ft@@ (2@@dg@@508 @@nm@@)"
+		info[]: "1@@dg@@100 @@rpm@@"
+		icon: "engine_mx"
+		
+		# Engine Specs
+		torque: 2508		# Engine power in Newton-metres
+		volume: 12.9		# Engine size in liters. Used for Realistic Fuel Consumption settings
+
+		# Torque Curves
+		torque_curve[]: (400, 0)
+		torque_curve[]: (900, 0.79)
+		torque_curve[]: (1000, 0.95)
+		torque_curve[]: (1120, 1)
+		torque_curve[]: (1360, 1)
+		torque_curve[]: (1500, 0.94)
+		torque_curve[]: (1600, 0.88)
+		torque_curve[]: (1700, 0.83)
+		torque_curve[]: (1800, 0.77)
+		torque_curve[]: (1900, 0.71)
+		torque_curve[]: (2400, 0)
+
+		# RPM Data
+		rpm_idle: 650		# RPM at idle
+		rpm_limit: 2200		# Governed RPM limit
+		rpm_limit_neutral: 2200	# RPM limit in neutral gear
+		rpm_range_low_gear: (800, 1600)
+		rpm_range_high_gear: (1100, 1600)
+		rpm_range_power_boost: (450, 350)
+		
+		# Engine Brake data
+		engine_brake: 2			# Engine Brake Strength
+		engine_brake_downshift: 0	# Enable automatic downshift for Engine Brake
+		engine_brake_positions: 3	# The number of engine brake intensities
+		
+		# Sound Data
+		defaults[]: "/def/vehicle/truck/kenworth.t680/sound/interior_mx13.sii"
+		defaults[]: "/def/vehicle/truck/kenworth.t680/sound/exterior_mx13.sii"
+	}
+}
