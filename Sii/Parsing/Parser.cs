@@ -180,6 +180,10 @@ namespace Sii.Parsing
             // Parse through until we find the Right Brace
             while( !this.MatchAndTake( TokenKind.RightBrace ) )
             {
+                // Check for directives
+                if (this.MatchAndTake(TokenKind.Directive))
+                    continue;
+
                 // Grab the attribute name
                 var attribute = this.Take( TokenKind.Identifier ).Text;
                 // Check for array

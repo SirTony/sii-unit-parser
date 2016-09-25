@@ -65,6 +65,7 @@ namespace Sii.Parsing
             this.Spans = new Stack<TextSpan>();
             this.Lexemes = new ReadOnlyCollection<Lexeme>( new Lexeme[]
             {
+                this.TryLexDirective,
                 this.TryLexIdentifier,
                 this.TryLexNumber,
                 this.TryLexString,
@@ -128,9 +129,10 @@ namespace Sii.Parsing
 
         private bool SkipLineComments( char c )
         {
-            if( c != '#' )
+            if (c != '#')
                 return false;
 
+            // Skip comment or directive until we hit a new line
             this.SkipWhile( ch => ch != '\n' && ch != '\r' );
             return true;
         }
@@ -160,6 +162,21 @@ namespace Sii.Parsing
 
             this.Spans.Pop();
             return true;
+        }
+
+        private bool TryLexDirective(char c, out Token token )
+        {
+            // If the next 3 characters are inc... its an enclude
+            if ( c == '@' && (this.Peek(-1) == '\r' || this.Peek(-1) == '\n') )
+            {
+                this.MarkStart();
+                var text = this.TakeWhile(ch => ch != '\n' && ch != '\r');
+                token = this.MakeToken(TokenKind.Directive, text);
+                return true;
+            }
+
+            token = null;
+            return false;
         }
 
         private bool TryLexIdentifier( char c, out Token token )

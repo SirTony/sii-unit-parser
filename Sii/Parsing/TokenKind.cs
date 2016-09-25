@@ -2,6 +2,7 @@
 {
     internal enum TokenKind
     {
+        Directive,
         Identifier,
         String,
         Number,

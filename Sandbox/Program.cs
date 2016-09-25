@@ -29,7 +29,7 @@ namespace Sandbox
             // Debug stuff, just printing out all the fields
             var type = engineData.GetType();
             var className = type.GetCustomAttribute<SiiUnitAttribute>().ClassName;
-            Console.WriteLine( "catc15_600.kenworth.w900.engine = {0} ({1})", type.Name, className );
+            Console.WriteLine( "{2} = {0} ({1})", type.Name, className, keys[0] );
 
             var properties = type.GetProperties( BindingFlags.Public | BindingFlags.Instance );
             foreach( var property in properties )
