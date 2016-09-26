@@ -129,7 +129,8 @@ namespace Sii.Parsing
 
         private bool SkipLineComments( char c )
         {
-            if (c != '#')
+            // skip both types of inline comments
+            if (c != '#' && c != '/')
                 return false;
 
             // Skip comment or directive until we hit a new line
