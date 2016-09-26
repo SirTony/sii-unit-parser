@@ -139,11 +139,11 @@ namespace Sii.Parsing
             this.Take( TokenKind.Colon );
 
             // is this an anonymous classs?
-            var anonymous = this.Match( TokenKind.Dot );
+            var nameless = this.Match( TokenKind.Dot );
 
             // Begin fetching the class name
             var builder = new StringBuilder();
-            if( anonymous )
+            if( nameless )
                 builder.Append( this.Take().Text );
 
             // Parse the object name, taking all sections seperated by dots
@@ -313,7 +313,7 @@ namespace Sii.Parsing
             }
 
             // Do not return nameless objects
-            return anonymous ? (KeyValuePair<string, object>?) null : new KeyValuePair<string, object>( name, instance );
+            return nameless ? (KeyValuePair<string, object>?) null : new KeyValuePair<string, object>( name, instance );
         }
 
         /// <summary>
@@ -352,7 +352,7 @@ namespace Sii.Parsing
         }
 
         /// <summary>
-        /// Returns the C# Member type (not the value, but definition type)
+        /// Returns the C# Member type
         /// </summary>
         /// <param name="member"></param>
         /// <returns></returns>
@@ -376,32 +376,39 @@ namespace Sii.Parsing
             {
                 case TokenKind.String:
                     if( type != typeof( string ) )
-                        throw new SiiException( $"Type mistmatch. Expected string, got {type.Name}" );
+                        throw new SiiException( $"Type mistmatch. Expected string, got {type.Name} on line {token.Span.Start.Line}" );
 
                     return token.Text;
 
                 case TokenKind.Number:
-                    {
-                        if( !NumericTypes.Contains( type ) )
-                            throw new SiiException( $"Type mismatch. Expected numeric type, got {type.Name}" );
+                    if( !NumericTypes.Contains( type ) )
+                        throw new SiiException( $"Type mismatch. Expected numeric type, got {type.Name} on line {token.Span.Start.Line}" );
 
-                        var format = (NumberFormat)token.Tag;
+                    var format = (NumberFormat)token.Tag;
 
-                        if( format == NumberFormat.HexFloat )
-                            throw new SiiSyntaxException( token, "Hex floats are not supported" );
+                    // We dont support Hex Floats yet
+                    if( format == NumberFormat.HexFloat )
+                        throw new SiiSyntaxException( token, "Hex floats are not supported" );
 
-                        if( ( format == NumberFormat.Float || format == NumberFormat.HexFloat ) && !FloatTypes.Contains( type ) )
-                            throw new SiiException( $"Type mismatch. Expected {type.Name}, got float" );
+                    // Check for type mismatch
+                    if( ( format == NumberFormat.Float || format == NumberFormat.HexFloat ) && !FloatTypes.Contains( type ) )
+                        throw new SiiException( $"Type mismatch. Expected {type.Name}, got float on line {token.Span.Start.Line}" );
 
-                        var style = format == NumberFormat.Float || format == NumberFormat.HexFloat ? NumberStyles.Float : NumberStyles.Integer;
-                        var parser = type.GetMethod( "Parse", BindingFlags.Public | BindingFlags.Static, null, new[] { typeof( string ), typeof( NumberStyles ) }, null );
-                        return parser.Invoke( null, new object[] { token.Text, style } );
-                    }
+                    // Grab the Parse method from the numeric type
+                    var style = format == NumberFormat.Float || format == NumberFormat.HexFloat ? NumberStyles.Float : NumberStyles.Integer;
+                    var parser = type.GetMethod( 
+                        "Parse", 
+                        BindingFlags.Public | BindingFlags.Static, 
+                        null, 
+                        new[] { typeof( string ), typeof( NumberStyles ), typeof( IFormatProvider ) }, 
+                        null 
+                    );
+                    return parser.Invoke( null, new object[] { token.Text, style, CultureInfo.InvariantCulture } );
 
                 case TokenKind.True:
                 case TokenKind.False:
                     if( type != typeof( bool ) )
-                        throw new SiiException( $"Type mismatch. Expected bool, got {type.Name}" );
+                        throw new SiiException( $"Type mismatch. Expected bool, got {type.Name} on line {token.Span.Start.Line}" );
 
                     return token.Kind == TokenKind.True ? true : false;
 
@@ -410,19 +417,22 @@ namespace Sii.Parsing
                     var builder = new StringBuilder(token.Text);
 
                     // Parse the object name, taking all sections seperated by dots
-                    builder.Append(this.Take(TokenKind.Identifier).Text);
+                    builder.Append(this.Take(new[] { TokenKind.Identifier, TokenKind.Number }).Text);
                     var dot = default(Token);
                     while (this.MatchAndTake(TokenKind.Dot, out dot))
                     {
                         builder.Append(dot.Text);
-                        builder.Append(this.Take(TokenKind.Identifier).Text);
+                        builder.Append(this.Take(new[] { TokenKind.Identifier, TokenKind.Number }).Text);
                     }
 
-                    // Fetch the C# class type, so we can create an object instance
+                    // Fetch the C# class type, so we can return an object instance
                     var name = builder.ToString();
+                    if (!ClassMap.ContainsKey(name))
+                        throw new SiiException($"Access to an undefined object \"{name}\" found on line {token.Span.Start.Line}");
+
                     return ClassMap[name];
                 default:
-                    throw new SiiException( $"Unsupported value type {token.Kind.ToString().ToLowerInvariant()}" );
+                    throw new SiiException( $"Unsupported value type {token.Kind.ToString().ToLowerInvariant()} on line {token.Span.Start.Line}" );
             }
         }
 
