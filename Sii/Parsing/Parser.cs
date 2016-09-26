@@ -386,16 +386,16 @@ namespace Sii.Parsing
 
                     var format = (NumberFormat)token.Tag;
 
-                    // We dont support Hex Floats yet
-                    if( format == NumberFormat.HexFloat )
-                        throw new SiiSyntaxException( token, "Hex floats are not supported" );
+                    // Parse Hex Floats using the SiiConverter class
+                    if (format == NumberFormat.HexFloat)
+                        return SiiConverter.FromHexString(token.Text);
 
                     // Check for type mismatch
-                    if( ( format == NumberFormat.Float || format == NumberFormat.HexFloat ) && !FloatTypes.Contains( type ) )
+                    if( ( format == NumberFormat.Float ) && !FloatTypes.Contains( type ) )
                         throw new SiiException( $"Type mismatch. Expected {type.Name}, got float on line {token.Span.Start.Line}" );
 
                     // Grab the Parse method from the numeric type
-                    var style = format == NumberFormat.Float || format == NumberFormat.HexFloat ? NumberStyles.Float : NumberStyles.Integer;
+                    var style = format == NumberFormat.Float ? NumberStyles.Float : NumberStyles.Integer;
                     var parser = type.GetMethod( 
                         "Parse", 
                         BindingFlags.Public | BindingFlags.Static, 

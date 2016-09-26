@@ -28,7 +28,7 @@ accessory_engine_data : isx12.kenworth.t680.engine
 
    volume: 12
 
-   engine_brake: 2.0
+   engine_brake: &3f800000
    engine_brake_downshift: 0
    engine_brake_positions: 3
 }

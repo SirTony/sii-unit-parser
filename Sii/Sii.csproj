@@ -51,6 +51,7 @@
     <Compile Include="SiiAttributeAttribute.cs" />
     <Compile Include="SiiDocument.cs" />
     <Compile Include="SiiException.cs" />
+    <Compile Include="SiiConverter.cs" />
     <Compile Include="SiiSyntaxException.cs" />
     <Compile Include="SiiUnitAttribute.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
