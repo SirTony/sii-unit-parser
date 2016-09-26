@@ -181,7 +181,7 @@ namespace Sii.Parsing
             while( !this.MatchAndTake( TokenKind.RightBrace ) )
             {
                 // Check for directives
-                if (this.MatchAndTake(TokenKind.Directive))
+                if( this.MatchAndTake(TokenKind.Directive) )
                     continue;
 
                 // Grab the attribute name
@@ -252,7 +252,7 @@ namespace Sii.Parsing
 
                 // Non-array.. Grab the colon and move on
                 this.Take( TokenKind.Colon );
-                foreach( var m in members )
+                foreach ( var m in members )
                 {
                     if( m.GetCustomAttribute<SiiAttributeAttribute>()?.Name == attribute )
                     {
@@ -335,9 +335,17 @@ namespace Sii.Parsing
 
                 var values = new List<object>();
                 values.Add( this.ParseScalarValue( fieldType ) );
-                this.Take( TokenKind.Comma );
+
+                // Grab initial seperator
+                var kind = this.Take( new[] { TokenKind.Comma, TokenKind.SemiColon } ).Kind;
+                if (kind == TokenKind.SemiColon && type != typeof(Quaternion))
+                    throw new SiiException($"Type mismatch. Expected Quaternion but found {type.Name}");
+
+                // Grab all the remaining values
                 do values.Add( this.ParseScalarValue( fieldType ) );
                 while( this.MatchAndTake( TokenKind.Comma ) );
+
+                // End
                 this.Take( TokenKind.RightParen );
 
                 // Make sure the sizes of the Vectors match
@@ -381,13 +389,18 @@ namespace Sii.Parsing
                     return token.Text;
 
                 case TokenKind.Number:
+                    var format = (NumberFormat)token.Tag;
+
+                    // Check for arrays
+                    if( type.IsArray && format == NumberFormat.Integer )
+                        return null;
+
+                    // Ensure supported numeric type
                     if( !NumericTypes.Contains( type ) )
                         throw new SiiException( $"Type mismatch. Expected numeric type, got {type.Name} on line {token.Span.Start.Line}" );
 
-                    var format = (NumberFormat)token.Tag;
-
                     // Parse Hex Floats using the SiiConverter class
-                    if (format == NumberFormat.HexFloat)
+                    if( format == NumberFormat.HexFloat )
                         return SiiConverter.FromHexString(token.Text);
 
                     // Check for type mismatch

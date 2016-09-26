@@ -2,7 +2,7 @@
 {
     internal enum NumberFormat
     {
-        Decimal,
+        Integer,
         Float,
         HexFloat,
     }

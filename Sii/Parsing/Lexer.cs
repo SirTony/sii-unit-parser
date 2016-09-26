@@ -26,8 +26,9 @@ namespace Sii.Parsing
                 ['{'] = TokenKind.LeftBrace,
                 ['}'] = TokenKind.RightBrace,
                 [':'] = TokenKind.Colon,
+                [';'] = TokenKind.SemiColon,
                 ['.'] = TokenKind.Dot,
-                [','] = TokenKind.Comma,
+                [','] = TokenKind.Comma
             };
 
             var keywords = new Dictionary<string, TokenKind>
@@ -130,7 +131,7 @@ namespace Sii.Parsing
         private bool SkipLineComments( char c )
         {
             // skip both types of inline comments
-            if (c != '#' && c != '/')
+            if( c != '#' && !this.IsNext("//") )
                 return false;
 
             // Skip comment or directive until we hit a new line
@@ -168,7 +169,7 @@ namespace Sii.Parsing
         private bool TryLexDirective(char c, out Token token )
         {
             // If the next 3 characters are inc... its an enclude
-            if ( c == '@' && (this.Peek(-1) == '\r' || this.Peek(-1) == '\n') )
+            if( c == '@' && (this.Peek(-1) == '\r' || this.Peek(-1) == '\n') )
             {
                 this.MarkStart();
                 var text = this.TakeWhile(ch => ch != '\n' && ch != '\r');
@@ -197,7 +198,7 @@ namespace Sii.Parsing
 
         private bool TryLexNumber( char c, out Token token )
         {
-            if( c != '&' && !Char.IsDigit( c ) )
+            if( c != '&' && c != '-' && !Char.IsDigit( c ) )
             {
                 token = null;
                 return false;
@@ -217,9 +218,11 @@ namespace Sii.Parsing
             }
 
             var hasDecimal = false;
+            var isNegative = false;
             var hasExponent = false;
             var forceTake = false;
-            var format = NumberFormat.Decimal;
+            var format = NumberFormat.Integer;
+
             text = this.TakeWhile( delegate ( char ch )
             {
                 if( forceTake )
@@ -230,7 +233,14 @@ namespace Sii.Parsing
 
                 var next = this.Peek( 1 );
 
-                if( ch == '.' && Char.IsDigit( next ) )
+                // Negative number?
+                if( c == '-' && !isNegative && Char.IsDigit(next) )
+                {
+                    isNegative = true;
+                    return true;
+                }
+
+                if ( ch == '.' && Char.IsDigit( next ) )
                 {
                     if( hasDecimal )
                         throw new SiiSyntaxException( this.MarkEnd(), "Number already has a decimal point" );

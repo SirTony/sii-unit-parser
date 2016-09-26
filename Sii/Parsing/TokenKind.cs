@@ -16,9 +16,10 @@
         LeftBrace,
         RightBrace,
         Colon,
+        SemiColon,
         Dot,
         Comma,
 
-        EndOfInput,
+        EndOfInput
     }
 }

@@ -1,5 +1,8 @@
 ﻿SiiNunit
 {
+/*
+ * Test
+ */
 accessory_engine_data : isx12.kenworth.t680.engine
 {
 	// Test comment 1
@@ -7,6 +10,8 @@ accessory_engine_data : isx12.kenworth.t680.engine
    name: "Cummins / ISX 12"
    price: 44650
    unlock: 0
+
+   info: 3
    info[]: "370 @@hp@@ (276@@kw@@)"
    info[]: "1@@dg@@350 @@lb_ft@@ (1830@@nm@@)"
    info[]: "1@@dg@@100 @@rpm@@"
@@ -32,6 +37,6 @@ accessory_engine_data : isx12.kenworth.t680.engine
 
    engine_brake: &3f800000
    engine_brake_downshift: 0
-   engine_brake_positions: 3
+   engine_brake_positions: -3
 }
 }
