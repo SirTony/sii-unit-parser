@@ -67,8 +67,8 @@ namespace Sii.Parsing
             this.Lexemes = new ReadOnlyCollection<Lexeme>( new Lexeme[]
             {
                 this.TryLexDirective,
-                this.TryLexIdentifier,
                 this.TryLexNumber,
+                this.TryLexIdentifier,
                 this.TryLexString,
                 this.TryLexPunctuation,
             } );
@@ -183,14 +183,14 @@ namespace Sii.Parsing
 
         private bool TryLexIdentifier( char c, out Token token )
         {
-            if( !Char.IsLetter( c ) && c != '_' )
+            if( !Char.IsLetter( c ) && c != '_'  && c != '?')
             {
                 token = null;
                 return false;
             }
 
             this.MarkStart();
-            var text = this.TakeWhile( ch => Char.IsLetterOrDigit( ch ) || ch == '_' );
+            var text = this.TakeWhile( ch => Char.IsLetterOrDigit( ch ) || ch == '_' || ch == '?' );
             var kind = Keywords.ContainsKey( text ) ? Keywords[text] : TokenKind.Identifier;
             token = this.MakeToken( kind, text );
             return true;
@@ -198,7 +198,7 @@ namespace Sii.Parsing
 
         private bool TryLexNumber( char c, out Token token )
         {
-            if( c != '&' && c != '-' && !Char.IsDigit( c ) )
+            if( c != '&' && c != '-' && !Char.IsDigit( c ) && c != '_')
             {
                 token = null;
                 return false;
@@ -222,6 +222,7 @@ namespace Sii.Parsing
             var hasExponent = false;
             var forceTake = false;
             var format = NumberFormat.Integer;
+            var tokenKind = TokenKind.Number;
 
             text = this.TakeWhile( delegate ( char ch )
             {
@@ -233,44 +234,64 @@ namespace Sii.Parsing
 
                 var next = this.Peek( 1 );
 
-                // Negative number?
-                if( c == '-' && !isNegative && Char.IsDigit(next) )
+                if (tokenKind == TokenKind.Number)
                 {
-                    isNegative = true;
-                    return true;
-                }
+                    if (Char.IsLetter(ch) || ch == '_' || ch == '?')
+                    {
+                        if (ch == 'e' || ch == 'E')
+                        {
+                            var second = this.Peek(2);
+                            if (!Char.IsDigit(next) && !((next == '-' || next == '+') && Char.IsDigit(second)))
+                            {
+                                // Try Identifier
+                                tokenKind = TokenKind.Identifier;
+                                return true;
+                            }
 
-                if ( ch == '.' && Char.IsDigit( next ) )
+                            if (hasExponent)
+                                throw new SiiSyntaxException(this.MarkEnd(), "Number already has exponent");
+
+                            if ((next == '-' || next == '+') && Char.IsDigit(second))
+                                forceTake = true;
+
+                            format = NumberFormat.Float;
+                            hasExponent = true;
+                            return Char.IsDigit(next) || Char.IsDigit(second);
+                        }
+                        else
+                        {
+                            // Try Identifier
+                            tokenKind = TokenKind.Identifier;
+                            return true;
+                        }
+                    }
+
+                    // Negative number?
+                    if (ch == '-' && !isNegative && Char.IsDigit(next))
+                    {
+                        isNegative = true;
+                        return true;
+                    }
+
+                    if (ch == '.' && Char.IsDigit(next))
+                    {
+                        if (hasDecimal)
+                            throw new SiiSyntaxException(this.MarkEnd(), "Number already has a decimal point");
+
+                        format = NumberFormat.Float;
+                        hasDecimal = true;
+                        return true;
+                    }
+
+                    return Char.IsDigit(ch);
+                }
+                else
                 {
-                    if( hasDecimal )
-                        throw new SiiSyntaxException( this.MarkEnd(), "Number already has a decimal point" );
-
-                    format = NumberFormat.Float;
-                    hasDecimal = true;
-                    return true;
+                    return (Char.IsLetterOrDigit(ch) || ch == '_' || ch == '?');
                 }
-
-                if( ( ch == 'e' || ch == 'E' ) )
-                {
-                    var second = this.Peek( 2 );
-                    if( !Char.IsDigit( next ) && !( ( next == '-' || next == '+' ) && Char.IsDigit( second ) ) )
-                        return false;
-
-                    if( hasExponent )
-                        throw new SiiSyntaxException( this.MarkEnd(), "Number already has exponent" );
-
-                    if( ( next == '-' || next == '+' ) && Char.IsDigit( second ) )
-                        forceTake = true;
-
-                    format = NumberFormat.Float;
-                    hasExponent = true;
-                    return Char.IsDigit( next ) || Char.IsDigit( second );
-                }
-
-                return Char.IsDigit( ch );
             } );
 
-            token = this.MakeToken( TokenKind.Number, text, format );
+            token = this.MakeToken( tokenKind, text, format );
             return true;
         }
 

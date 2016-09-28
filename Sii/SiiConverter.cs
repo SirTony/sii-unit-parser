@@ -17,7 +17,7 @@ namespace Sii
         {
             var bytes = BitConverter.GetBytes(f);
             var i = BitConverter.ToInt32(bytes, 0);
-            return "&" + i.ToString("X8");
+            return "&" + i.ToString("x8");
         }
 
         /// <summary>
