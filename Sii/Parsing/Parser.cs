@@ -101,8 +101,11 @@ namespace Sii.Parsing
                 // Add each struct to the ClassMap Dictionary
                 foreach (Match m in matches)
                 {
-                    var instance = Activator.CreateInstance(item.Value);
-                    ClassMap.Add(m.Groups["name"].Value, instance);
+                    if (!ClassMap.ContainsKey(m.Groups["name"].Value))
+                    {
+                        var instance = Activator.CreateInstance(item.Value);
+                        ClassMap.Add(m.Groups["name"].Value, instance);
+                    }
                 }
             }
 
@@ -134,6 +137,10 @@ namespace Sii.Parsing
         /// <returns></returns>
         private KeyValuePair<string, object>? ParseDefinition( ReadOnlyDictionary<string, Type> classes )
         {
+            // Check for directives
+            if (this.MatchAndTake(TokenKind.Directive))
+                return null;
+
             // Grab the classname
             var className = this.Take( TokenKind.Identifier ).Text;
             this.Take( TokenKind.Colon );
@@ -147,7 +154,7 @@ namespace Sii.Parsing
                 builder.Append( this.Take().Text );
 
             // Parse the object name, taking all sections seperated by dots
-            builder.Append( this.Take( TokenKind.Identifier ).Text );
+            builder.Append( this.Take(new[] { TokenKind.Identifier, TokenKind.Number }).Text );
             var dot = default( Token );
             while( this.MatchAndTake( TokenKind.Dot, out dot ) )
             {
